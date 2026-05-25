@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional
 from enum import Enum
 
@@ -24,13 +24,12 @@ class AccountingCode(BaseModel):
 
 
 class LigneEcriture(BaseModel):
+    model_config = ConfigDict(use_enum_values=True)
+
     sens: SensEcriture
     compte: str
     libelle: str
     montant: float
-
-    class Config:
-        use_enum_values = True
 
 
 class JournalEntry(BaseModel):

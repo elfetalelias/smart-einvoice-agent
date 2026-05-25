@@ -1,11 +1,16 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+from typing import Optional
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
-    openai_api_key: str = Field(..., description="Clé API OpenAI")
+    openai_api_key: Optional[str] = Field(default=None)
     openai_model: str = Field(default="gpt-4o")
     openai_embedding_model: str = Field(default="text-embedding-3-small")
 

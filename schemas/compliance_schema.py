@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional
 from enum import Enum
 
@@ -10,13 +10,12 @@ class NiveauAvertissement(str, Enum):
 
 
 class Avertissement(BaseModel):
+    model_config = ConfigDict(use_enum_values=True)
+
     code: str = Field(description="Code ex: TVA_INCOHERENTE")
     message: str = Field(description="Message en français")
     niveau: NiveauAvertissement
     reference_legale: Optional[str] = Field(default=None)
-
-    class Config:
-        use_enum_values = True
 
 
 class ComplianceResult(BaseModel):

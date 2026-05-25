@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langchain_classic.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate
 from config.llm import get_llm
 from tools.tax_rules_retriever_tool import search_regles_fiscales
