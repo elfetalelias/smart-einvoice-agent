@@ -136,7 +136,8 @@ UTILISATEUR téléverse facture (PDF/XML)
          |
          v
 [NOEUD: check_compliance]
-  Agent Conformité appelle search_regles_fiscales()
+  Agent Conformité appelle retrieve_context() — routing implicite LLM
+  -> le RAG router choisit le(s) corpus pertinent(s) (fiscal + normes)
   -> vérifie champs obligatoires, cohérence TVA
   -> produit liste d'avertissements
          |
@@ -147,7 +148,8 @@ UTILISATEUR téléverse facture (PDF/XML)
          |
          v
 [NOEUD: classify_accounting]
-  Agent Classificateur appelle search_plan_comptable()
+  Agent Classificateur appelle retrieve_context() — routing implicite LLM
+  -> le RAG router sélectionne le corpus Plan Comptable Marocain
   -> propose code PCM + justification
   -> score_confiance_classification
          |
@@ -229,8 +231,10 @@ Trois corpus vectorisés avec FAISS :
 3. Corpus Plan Comptable Marocain (Classes 2, 3, 4, 6, 7)
    Tool : search_plan_comptable(query)
 
-Routing dynamique : chaque agent sélectionne le(s) corpus pertinent(s) selon sa mission.
-Un agent RAG à routing implicite par LLM (create_react_agent) est disponible dans rag/rag_router_agent.py.
+**Routing implicite par LLM** : tous les agents appellent `retrieve_context()` (rag/rag_router_agent.py).
+L'agent RAG (`create_react_agent` — langgraph.prebuilt) analyse la question, choisit le(s) outil(s)
+pertinent(s) parmi les trois retrievers, récupère les documents et génère une réponse contextuelle.
+L'agent n'est pas limité à un seul corpus — il peut combiner plusieurs outils sur une même question.
 
 ---
 
@@ -271,7 +275,7 @@ Actions : Accepter / Corriger le code manuellement
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Cloner le projet
-git clone https://github.com/<username>/smart-einvoice-agent.git
+git clone https://github.com/elfetalelias/smart-einvoice-agent.git
 cd smart-einvoice-agent
 
 # Créer l'environnement et installer les dépendances
