@@ -90,10 +90,15 @@ def sidebar():
 # ─── Workers parallèles ────────────────────────────────────────────────────────
 
 def _new_state(nom: str, path: str, ext: str) -> dict:
+    """Initialise un InvoiceState compatible avec le graphe LangGraph."""
     return {
+        # Champs InvoiceState (graph/invoice_state.py)
         "fichier_nom": nom,
         "fichier_path": path,
         "fichier_type": ext,
+        "statut": "fichier_reçu",
+        "etape_courante": "Initialisation",
+        "erreur": None,
         "donnees_extraites": None,
         "validation_extraction": None,
         "resultat_conformite": None,
@@ -101,7 +106,11 @@ def _new_state(nom: str, path: str, ext: str) -> dict:
         "code_comptable": None,
         "validation_classification": None,
         "ecriture_comptable": None,
-        "erreur": None,
+        "rapport_final": None,
+        "rapport_genere": False,
+        "contexte_rag": [],
+        "historique_validations": [],
+        # Suivi d'erreurs par étape (UI batch)
         "erreur_conformite": None,
         "erreur_classification": None,
         "erreur_journal": None,
@@ -109,7 +118,7 @@ def _new_state(nom: str, path: str, ext: str) -> dict:
 
 
 def _run_parallel(fn, indices: list, label: str):
-    """Apply fn(batch[i]) for each index in indices, update batch in place."""
+    """Exécute fn(batch[i]) en parallèle via ThreadPoolExecutor."""
     batch = st.session_state.batch
     if not indices:
         return
@@ -128,56 +137,43 @@ def _run_parallel(fn, indices: list, label: str):
     bar.empty()
 
 
+# ── Workers : appellent les nœuds LangGraph (graph/nodes.py) ──────────────────
+# Le mode batch parallèle exécute chaque nœud indépendamment par facture.
+# Le graphe compilé (invoice_graph) gère le flux complet (voir demo_graph.py).
+
 def _worker_extract(state: dict) -> dict:
-    from agents.extractor_agent import run_extractor_agent
-    updated = {**state}
-    try:
-        updated["donnees_extraites"] = run_extractor_agent(
-            file_path=state["fichier_path"], file_type=state["fichier_type"]
-        )
-        updated["erreur"] = None
-    except Exception as e:
-        updated["donnees_extraites"] = None
-        updated["erreur"] = str(e)
-    return updated
+    from graph.nodes import node_extract_invoice
+    result = node_extract_invoice(state)
+    if result.get("erreur"):
+        return {**result, "donnees_extraites": None}
+    return result
 
 
 def _worker_conformite(state: dict) -> dict:
-    from agents.compliance_agent import run_compliance_agent
-    updated = {**state}
-    try:
-        updated["resultat_conformite"] = run_compliance_agent(state["donnees_extraites"])
-        updated["erreur_conformite"] = None
-    except Exception as e:
-        updated["resultat_conformite"] = None
-        updated["erreur_conformite"] = str(e)
-    return updated
+    from graph.nodes import node_check_compliance
+    result = node_check_compliance(state)
+    if result.get("erreur"):
+        return {**result, "resultat_conformite": None,
+                "erreur_conformite": result["erreur"], "erreur": None}
+    return result
 
 
 def _worker_classifier(state: dict) -> dict:
-    from agents.accounting_classifier_agent import run_accounting_classifier_agent
-    updated = {**state}
-    try:
-        updated["code_comptable"] = run_accounting_classifier_agent(state["donnees_extraites"])
-        updated["erreur_classification"] = None
-    except Exception as e:
-        updated["code_comptable"] = None
-        updated["erreur_classification"] = str(e)
-    return updated
+    from graph.nodes import node_classify_accounting
+    result = node_classify_accounting(state)
+    if result.get("erreur"):
+        return {**result, "code_comptable": None,
+                "erreur_classification": result["erreur"], "erreur": None}
+    return result
 
 
 def _worker_journal(state: dict) -> dict:
-    from agents.journal_entry_agent import run_journal_entry_agent
-    updated = {**state}
-    try:
-        updated["ecriture_comptable"] = run_journal_entry_agent(
-            state["donnees_extraites"], state["code_comptable"]
-        )
-        updated["erreur_journal"] = None
-    except Exception as e:
-        updated["ecriture_comptable"] = None
-        updated["erreur_journal"] = str(e)
-    return updated
+    from graph.nodes import node_generate_journal_entry
+    result = node_generate_journal_entry(state)
+    if result.get("erreur"):
+        return {**result, "ecriture_comptable": None,
+                "erreur_journal": result["erreur"], "erreur": None}
+    return result
 
 
 # ─── Étape 1 : Téléversement & extraction parallèle ──────────────────────────
