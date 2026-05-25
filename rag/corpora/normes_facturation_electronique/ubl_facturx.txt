@@ -1,30 +1,135 @@
-SOURCE: EN 16931 - Norme Européenne de Facturation Électronique / UBL 2.1
+SOURCE : Loi de Finances 2024 — Article 145 du CGI Marocain / DGI Maroc / OMPIC
 
-STRUCTURE D'UNE FACTURE UBL (Universal Business Language)
-Éléments principaux :
-- cbc:ID : Identifiant unique de la facture
-- cbc:IssueDate : Date d'émission (format YYYY-MM-DD)
-- cac:AccountingSupplierParty : Informations fournisseur
-- cac:AccountingCustomerParty : Informations client
-- cac:TaxTotal : Total TVA
-- cac:LegalMonetaryTotal : Totaux financiers
-- cac:InvoiceLine : Lignes de facture
+====================================================================
+FACTURATION ÉLECTRONIQUE AU MAROC — CADRE LÉGAL ET RÉGLEMENTAIRE
+====================================================================
 
-FACTUR-X (Franco-allemand)
-Factur-X est un standard hybride PDF/XML basé sur EN 16931.
-Profils disponibles :
-- MINIMUM : données minimales obligatoires
-- BASIC WL : sans détail des lignes
-- BASIC : avec lignes de facture
-- EN 16931 : conforme à la norme européenne
-- EXTENDED : données supplémentaires
+1. BASE LÉGALE
+--------------
+La facturation électronique au Maroc est encadrée par :
+- L'article 145 du Code Général des Impôts (CGI) — obligations de facturation
+- La Loi n° 53-05 relative à l'échange électronique de données juridiques
+- La Loi de Finances 2024 — généralisation progressive de la e-facture
+- La circulaire de la DGI relative aux factures normalisées
+- Le décret n° 2-08-334 fixant les modalités d'application de la loi 53-05
 
-CHAMPS OBLIGATOIRES EN 16931
-BT-1  : Identifiant facture
-BT-2  : Date facture
-BT-5  : Code devise
-BT-27 : Nom du vendeur
-BT-31 : Identifiant fiscal vendeur
-BT-110 : Montant HT total
-BT-111 : Montant TVA
-BT-112 : Montant TTC
+2. CHAMPS OBLIGATOIRES D'UNE FACTURE (Article 145 CGI)
+-------------------------------------------------------
+Toute facture émise au Maroc doit obligatoirement comporter :
+
+§1  - La date d'établissement de la facture (format JJ/MM/AAAA)
+§2  - Le numéro séquentiel unique de la facture (non réutilisable)
+§3  - Le nom, raison sociale et adresse du fournisseur (vendeur)
+§4  - L'Identifiant Fiscal (IF) du fournisseur attribué par la DGI
+§5  - L'ICE (Identifiant Commun de l'Entreprise) du fournisseur (15 chiffres)
+§6  - Le nom, raison sociale et adresse du client (acheteur)
+§7  - La désignation précise des biens livrés ou services rendus
+§8  - Les quantités des biens ou services facturés
+§9  - Le prix unitaire hors taxe (HT)
+§10 - Le taux de TVA applicable
+§11 - Le montant de la TVA en dirhams (MAD)
+§12 - Le montant total toutes taxes comprises (TTC) en dirhams (MAD)
+§13 - Les conditions de paiement (délai, mode)
+
+Champs recommandés (non obligatoires mais fortement conseillés) :
+- ICE du client (si assujetti à la TVA)
+- Identifiant Fiscal (IF) du client
+- Numéro de bon de commande ou contrat
+- RIB / coordonnées bancaires du fournisseur
+
+3. TAUX DE TVA AU MAROC (Article 99 CGI)
+-----------------------------------------
+Taux normal :
+- 20% : taux général applicable à la majorité des biens et services
+
+Taux réduits :
+- 14% : transport de voyageurs, énergie électrique, beurre, eau, lubrifiants
+- 10% : hôtellerie, restauration, opérations bancaires et financières, crédit-bail,
+         opérations de bourse, huile d'olive, graisses alimentaires, pêche
+- 7%  : eau (réseau public), énergie électrique (tranches inférieures),
+         médicaments, fournitures scolaires, savon de ménage
+
+Exonérations (taux 0%) :
+- Produits alimentaires de base (pain, farine, lait, sucre brut, dattes, céréales)
+- Exportations de biens et services
+- Opérations réalisées par les coopératives
+- Certaines opérations bancaires islamiques (Mourabaha, Ijara)
+
+4. NUMÉROTATION DES FACTURES
+------------------------------
+- La numérotation doit être séquentielle et continue (sans rupture)
+- Chaque exercice fiscal peut avoir une nouvelle séquence (ex: FAC-2024-0001)
+- Les numéros ne peuvent pas être réutilisés
+- En cas d'annulation : émettre une facture d'avoir (note de crédit)
+- Format recommandé : PREFIX-ANNÉE-NUMÉRO (ex: FAC-2024-0047)
+
+5. FACTURE D'AVOIR (Note de Crédit)
+-------------------------------------
+- Obligatoire en cas d'annulation ou rectification d'une facture existante
+- Doit référencer le numéro de la facture originale
+- Montants en négatif
+- Même champs obligatoires que la facture normale
+
+6. DÉLAIS DE CONSERVATION
+---------------------------
+- Les factures doivent être conservées pendant 10 ans (Article 212 CGI)
+- Obligation de présentation en cas de contrôle fiscal
+- Les factures électroniques ont la même valeur juridique que les factures papier
+  à condition de garantir leur intégrité, authenticité et lisibilité
+
+7. IDENTIFIANTS FISCAUX MAROCAINS
+------------------------------------
+ICE (Identifiant Commun de l'Entreprise) :
+- Composé de 15 chiffres
+- Attribué par l'OMPIC
+- Obligatoire pour toute personne morale depuis 2013
+- Format : XXXXXXXXXXXXXXX (15 chiffres numériques)
+
+IF (Identifiant Fiscal) :
+- Attribué par la Direction Générale des Impôts (DGI)
+- Identifie l'assujetti à la TVA et à l'IS
+- Utilisé pour toutes les déclarations fiscales
+
+RC (Registre de Commerce) :
+- Attribué par le Tribunal de Commerce
+- Identifie l'inscription légale de l'entreprise
+
+8. DEVISE ET MONTANTS
+-----------------------
+- La devise légale est le Dirham Marocain (MAD / DH)
+- Les montants doivent être exprimés en MAD
+- Les factures en devises étrangères doivent indiquer le taux de change DGI
+
+9. FACTURATION ÉLECTRONIQUE — GÉNÉRALISATION (Loi de Finances 2024)
+---------------------------------------------------------------------
+Phase 1 (2024-2025) : Grandes entreprises (CA > 50 millions MAD)
+Phase 2 (2026) : Entreprises moyennes (CA entre 10 et 50 millions MAD)
+Phase 3 (2027) : PME et auto-entrepreneurs
+
+Exigences techniques :
+- Format structuré (XML, JSON ou PDF/A avec métadonnées)
+- Signature électronique qualifiée (certificat agréé par l'ANRT)
+- Dépôt sur la plateforme DGI (portail Daribati)
+- Horodatage certifié
+
+10. SANCTIONS ET PÉNALITÉS (Articles 192+ CGI)
+------------------------------------------------
+- Absence de facture : amende 2 000 à 50 000 MAD par infraction
+- Facture incomplète : rejet de la déduction TVA
+- Fausse facture : sanctions pénales, majoration de 100%
+- Numérotation non séquentielle : risque de redressement fiscal
+
+11. TVA — RÉGIMES DE DÉCLARATION
+----------------------------------
+Régime mensuel : CA annuel > 1 000 000 MAD
+Régime trimestriel : CA annuel ≤ 1 000 000 MAD
+Déclaration via portail Simpl-TVA (DGI)
+Délai mensuel : avant le 20 du mois suivant
+Délai trimestriel : avant le 20 du mois suivant la fin du trimestre
+
+12. RÈGLES DE COHÉRENCE ARITHMÉTIQUE
+---------------------------------------
+- Montant TVA = Montant HT × Taux TVA (tolérance ±0,02 MAD)
+- Montant TTC = Montant HT + Montant TVA (tolérance ±0,02 MAD)
+- Total lignes HT = Somme (Quantité × Prix unitaire HT)
+- Cohérence entre taux TVA déclaré et taux applicable au secteur d'activité

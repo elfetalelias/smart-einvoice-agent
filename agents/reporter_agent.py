@@ -1,28 +1,26 @@
 from pathlib import Path
 from datetime import datetime
+import json
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from config.llm import get_llm
-from graph.invoice_state import InvoiceState
-
 
 PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "rapporteur.txt"
 
 
-def run_reporter_agent(state: InvoiceState) -> str:
+def run_reporter_agent(state: dict) -> str:
     """Génère le rapport final en Markdown à partir de l'état complet du workflow."""
     llm = get_llm(temperature=0.1)
     system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
-        ("human", "Générer le rapport final pour l'état suivant :\n{state_json}"),
+        ("human", "Générer le rapport final pour :\n{state_json}"),
     ])
 
     chain = prompt | llm | StrOutputParser()
 
-    import json
-    state_dict = {
+    state_summary = {
         "fichier_nom": state.get("fichier_nom", ""),
         "date_rapport": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "donnees_extraites": state.get("donnees_extraites"),
@@ -35,5 +33,6 @@ def run_reporter_agent(state: InvoiceState) -> str:
         "contexte_rag": state.get("contexte_rag", []),
     }
 
-    rapport = chain.invoke({"state_json": json.dumps(state_dict, default=str, ensure_ascii=False)})
-    return rapport
+    return chain.invoke({
+        "state_json": json.dumps(state_summary, default=str, ensure_ascii=False, indent=2)
+    })

@@ -8,7 +8,8 @@ from config.settings import settings
 
 def load_or_create_store(index_path: str) -> FAISS:
     embeddings = get_embeddings()
-    if os.path.exists(f"{index_path}.faiss"):
+    index_file = os.path.join(index_path, "index.faiss")
+    if os.path.exists(index_file):
         return FAISS.load_local(
             index_path,
             embeddings,

@@ -184,6 +184,10 @@ Le traitement d'une facture est intrinsèquement séquentiel avec dépendances :
 Le Superviseur lit l'état global (InvoiceState), décide du prochain nœud, gère les bifurcations
 (rejet -> arrêt, modification -> re-extraction) et garantit que les validations humaines bloquent le flux.
 
+**Note architecture** : L'application Streamlit utilise un mode batch parallèle (ThreadPoolExecutor)
+pour traiter plusieurs factures simultanément. Le workflow LangGraph complet est disponible via
+ pour le mode facture unique.
+
 ---
 
 ## Agents du Système
@@ -219,13 +223,14 @@ Trois corpus vectorisés avec FAISS :
 1. Corpus Fiscal Marocain (TVA, ICE, mentions obligatoires)
    Tool : search_regles_fiscales(query)
 
-2. Corpus Normes Facturation Électronique (UBL, Factur-X, EN 16931)
+2. Corpus Normes Facturation Électronique (Article 145 CGI, ICE/IF, sanctions, e-facture DGI)
    Tool : search_normes_facturation(query)
 
 3. Corpus Plan Comptable Marocain (Classes 2, 3, 4, 6, 7)
    Tool : search_plan_comptable(query)
 
-Routing dynamique : analyse sémantique de la question -> sélection corpus pertinents.
+Routing dynamique : chaque agent sélectionne le(s) corpus pertinent(s) selon sa mission.
+Un agent RAG à routing implicite par LLM (create_react_agent) est disponible dans rag/rag_router_agent.py.
 
 ---
 
@@ -317,6 +322,7 @@ smart-einvoice-agent/
 ├── .env.example
 ├── .gitignore
 ├── app.py
+├── demo_graph.py
 ├── agents/
 │   ├── supervisor_agent.py
 │   ├── extractor_agent.py
@@ -333,11 +339,11 @@ smart-einvoice-agent/
 │   ├── xml_reader_tool.py
 │   ├── tax_rules_retriever_tool.py
 │   ├── einvoice_standards_retriever_tool.py
-│   ├── accounting_plan_retriever_tool.py
-│   └── validation_tools.py
+│   └── accounting_plan_retriever_tool.py
 ├── rag/
 │   ├── ingest.py
 │   ├── vector_store.py
+│   ├── rag_router_agent.py
 │   └── corpora/
 │       ├── regles_fiscales_marocaines/
 │       ├── normes_facturation_electronique/
@@ -365,6 +371,26 @@ smart-einvoice-agent/
     ├── test_accounting_classifier.py
     ├── test_rag_retrievers.py
     └── test_invoice_graph.py
+```
+
+---
+
+## Démonstration LangGraph (Mode Facture Unique)
+
+Pour exécuter le graphe LangGraph complet sur une facture unique (sans l'interface batch) :
+
+```bash
+uv run python demo_graph.py data/sample_invoices/facture_test_01.txt
+```
+
+Ce script exécute les 5 nœuds LangGraph séquentiellement avec validation humaine simulée.
+
+### Démonstration RAG Routing LLM
+
+Pour démontrer le routing implicite par LLM (le LLM choisit quel corpus interroger) :
+
+```bash
+uv run python rag/rag_router_agent.py
 ```
 
 ---

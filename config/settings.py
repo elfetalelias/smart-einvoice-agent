@@ -11,8 +11,11 @@ class Settings(BaseSettings):
     )
 
     openai_api_key: Optional[str] = Field(default=None)
-    openai_model: str = Field(default="gpt-4o")
+    openai_model: str = Field(default="gpt-4o-mini")
     openai_embedding_model: str = Field(default="text-embedding-3-small")
+
+    gemini_api_key: Optional[str] = Field(default=None)
+    gemini_model: str = Field(default="gemini-2.0-flash")
 
     ollama_base_url: str = Field(default="http://localhost:11434")
     ollama_model: str = Field(default="llama3.1")

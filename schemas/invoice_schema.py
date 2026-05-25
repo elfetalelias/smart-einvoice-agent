@@ -13,10 +13,14 @@ class LigneFacture(BaseModel):
 
 class InvoiceData(BaseModel):
     fournisseur: str = Field(description="Nom du fournisseur")
+    adresse_fournisseur: Optional[str] = Field(default=None, description="Adresse du fournisseur")
     numero_facture: str = Field(description="Numéro de la facture")
     date_facture: str = Field(description="Date de la facture (DD/MM/YYYY)")
-    ice: Optional[str] = Field(default=None, description="ICE du fournisseur")
+    ice: Optional[str] = Field(default=None, description="ICE du fournisseur (15 chiffres)")
     if_fournisseur: Optional[str] = Field(default=None, description="IF du fournisseur")
+    nom_client: Optional[str] = Field(default=None, description="Nom du client")
+    adresse_client: Optional[str] = Field(default=None, description="Adresse du client")
+    ice_client: Optional[str] = Field(default=None, description="ICE du client")
     montant_ht: float = Field(description="Montant hors taxes")
     taux_tva: float = Field(description="Taux de TVA appliqué (%)")
     montant_tva: float = Field(description="Montant de la TVA")
