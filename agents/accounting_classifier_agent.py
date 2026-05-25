@@ -1,7 +1,7 @@
 from pathlib import Path
 from langchain_core.prompts import ChatPromptTemplate
 from config.llm import get_llm_openai
-from tools.accounting_plan_retriever_tool import search_plan_comptable
+from rag.rag_router_agent import retrieve_context
 from schemas.invoice_schema import InvoiceData
 from schemas.accounting_schema import AccountingCode
 from config.settings import settings
@@ -11,11 +11,14 @@ PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "classificateur_comptab
 
 def run_accounting_classifier_agent(invoice_data: InvoiceData) -> AccountingCode:
     """Classifie la facture avec un code du Plan Comptable Marocain."""
-    # Étape 1 : construire la requête à partir des lignes de facture
+    # Routing RAG implicite par LLM — l'agent choisit le corpus approprié (PCM + fiscal si besoin)
     descriptions = " ".join(
         l.description for l in invoice_data.lignes_facture
     ) or invoice_data.fournisseur
-    rag_pcm = search_plan_comptable.invoke({"query": descriptions})
+    rag_pcm = retrieve_context(
+        f"Code comptable du Plan Comptable Marocain pour : {descriptions}. "
+        f"Fournisseur : {invoice_data.fournisseur}. Montant HT : {invoice_data.montant_ht} MAD."
+    )
 
     # Étape 2 : classification structurée
     llm = get_llm_openai(temperature=0.0)

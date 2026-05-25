@@ -7,6 +7,9 @@ from schemas.invoice_schema import InvoiceData, LigneFacture
 from schemas.compliance_schema import ComplianceResult, Avertissement, NiveauAvertissement
 from schemas.accounting_schema import AccountingCode, JournalEntry, LigneEcriture, SensEcriture
 
+# Pre-import modules so @patch decorators can resolve their target paths
+import agents.compliance_agent  # noqa: F401
+
 
 # --- Fixtures partagées ---
 
@@ -74,12 +77,10 @@ def make_journal_entry() -> JournalEntry:
 # ===========================
 
 class TestComplianceAgentIntegration:
-    @patch("agents.compliance_agent.search_regles_fiscales")
-    @patch("agents.compliance_agent.search_normes_facturation")
+    @patch("agents.compliance_agent.retrieve_context")
     @patch("agents.compliance_agent.get_llm_openai")
-    def test_run_compliance_returns_result(self, mock_llm, mock_normes, mock_fiscal):
-        mock_fiscal.invoke.return_value = "CGI Art.145 mentions obligatoires"
-        mock_normes.invoke.return_value = "UBL champs obligatoires"
+    def test_run_compliance_returns_result(self, mock_llm, mock_retrieve):
+        mock_retrieve.return_value = "CGI Art.145 mentions obligatoires — TVA valide"
         compliance = make_compliance(conforme=True)
         mock_chain = MagicMock()
         mock_chain.invoke.return_value = compliance
@@ -99,12 +100,10 @@ class TestComplianceAgentIntegration:
             assert isinstance(result, ComplianceResult)
             assert result.conforme is True
 
-    @patch("agents.compliance_agent.search_regles_fiscales")
-    @patch("agents.compliance_agent.search_normes_facturation")
+    @patch("agents.compliance_agent.retrieve_context")
     @patch("agents.compliance_agent.get_llm_openai")
-    def test_run_compliance_returns_warnings(self, mock_llm, mock_normes, mock_fiscal):
-        mock_fiscal.invoke.return_value = "Règles fiscales"
-        mock_normes.invoke.return_value = "Normes"
+    def test_run_compliance_returns_warnings(self, mock_llm, mock_retrieve):
+        mock_retrieve.return_value = "Règles fiscales et normes de facturation"
         result = make_compliance(conforme=False)
         assert result.conforme is False
         assert len(result.avertissements) == 1
