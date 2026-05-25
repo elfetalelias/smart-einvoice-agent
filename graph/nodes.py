@@ -60,9 +60,10 @@ def node_generate_journal_entry(state: InvoiceState) -> InvoiceState:
         invoice_data = state["donnees_extraites"]
         code = state["code_comptable"]
 
-        # Appliquer la correction humaine si présente
-        val = state.get("validation_classification", {})
-        if val and val.get("decision") == "corrigé" and val.get("modifications"):
+        # Appliquer la correction humaine si présente (validation_classification peut être
+        # une str "accepté"/"corrigé" ou un dict {"decision": ..., "modifications": ...})
+        val = state.get("validation_classification")
+        if isinstance(val, dict) and val.get("decision") == "corrigé" and val.get("modifications"):
             mods = val["modifications"]
             if "code_comptable" in mods:
                 code = code.model_copy(update={

@@ -530,6 +530,14 @@ def etape_5():
     batch = st.session_state.batch
     avec_ecriture = [s for s in batch if s.get("ecriture_comptable")]
 
+    # Afficher les erreurs de génération d'écriture
+    en_erreur = [s for s in batch if s.get("erreur_journal")]
+    for s in en_erreur:
+        st.markdown(
+            f'<div class="error-box">❌ <b>{s["fichier_nom"]}</b> — {s["erreur_journal"]}</div>',
+            unsafe_allow_html=True,
+        )
+
     if not avec_ecriture:
         st.error("Aucune écriture comptable disponible.")
         return
