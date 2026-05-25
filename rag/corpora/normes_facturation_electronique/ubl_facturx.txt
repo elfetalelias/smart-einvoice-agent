@@ -1,0 +1,30 @@
+SOURCE: EN 16931 - Norme Européenne de Facturation Électronique / UBL 2.1
+
+STRUCTURE D'UNE FACTURE UBL (Universal Business Language)
+Éléments principaux :
+- cbc:ID : Identifiant unique de la facture
+- cbc:IssueDate : Date d'émission (format YYYY-MM-DD)
+- cac:AccountingSupplierParty : Informations fournisseur
+- cac:AccountingCustomerParty : Informations client
+- cac:TaxTotal : Total TVA
+- cac:LegalMonetaryTotal : Totaux financiers
+- cac:InvoiceLine : Lignes de facture
+
+FACTUR-X (Franco-allemand)
+Factur-X est un standard hybride PDF/XML basé sur EN 16931.
+Profils disponibles :
+- MINIMUM : données minimales obligatoires
+- BASIC WL : sans détail des lignes
+- BASIC : avec lignes de facture
+- EN 16931 : conforme à la norme européenne
+- EXTENDED : données supplémentaires
+
+CHAMPS OBLIGATOIRES EN 16931
+BT-1  : Identifiant facture
+BT-2  : Date facture
+BT-5  : Code devise
+BT-27 : Nom du vendeur
+BT-31 : Identifiant fiscal vendeur
+BT-110 : Montant HT total
+BT-111 : Montant TVA
+BT-112 : Montant TTC

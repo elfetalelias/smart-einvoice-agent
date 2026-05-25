@@ -1,0 +1,23 @@
+FACTURE N° 2024-INF-089
+Date : 22/03/2024
+
+PRESTATAIRE :
+Nom : InfoSys Consulting SARL
+Adresse : 15 Avenue Hassan II, Rabat
+ICE : 003789012000078
+IF : 28901234
+
+CLIENT : Société ABC SA
+
+PRESTATION DE SERVICE
+
+Description : Maintenance informatique mensuelle
+              - 3 interventions sur site (2h chacune)
+              - Assistance téléphonique illimitée
+              - Mise à jour logiciels
+
+MONTANT HT :   3,500.00 MAD
+TVA (20%) :      700.00 MAD
+MONTANT TTC :  4,200.00 MAD
+
+Règlement : Chèque ou virement — 60 jours date facture

@@ -1,0 +1,27 @@
+FACTURE N° FAC-2024-0047
+Date : 15/03/2024
+
+FOURNISSEUR :
+Nom : Papeterie Atlas SARL
+Adresse : 25 Rue Mohammed V, Casablanca 20000
+ICE : 002456789000045
+IF : 15234567
+Tél : +212 522 123456
+
+CLIENT :
+Nom : Société ABC SA
+ICE : 001234567000012
+
+DÉSIGNATION                    QTÉ    PU HT      TOTAL HT
+--------------------------------------------------------------
+Ramettes A4 80g (500 feuilles)  20    25.00       500.00
+Cartouches imprimante HP         5    85.00       425.00
+Classeurs A4 (lot de 10)         3    45.00       135.00
+--------------------------------------------------------------
+
+TOTAL HT :                                       1,060.00 MAD
+TVA (20%) :                                        212.00 MAD
+TOTAL TTC :                                      1,272.00 MAD
+
+Mode de règlement : Virement bancaire — 30 jours
+RIB : 011 780 0001234567890 12

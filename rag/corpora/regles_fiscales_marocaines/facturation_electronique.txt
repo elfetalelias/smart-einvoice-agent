@@ -1,0 +1,23 @@
+SOURCE: Note Circulaire DGI n°717 - Facturation Électronique au Maroc
+
+DÉFINITION DE LA FACTURE ÉLECTRONIQUE
+Une facture électronique est une facture émise, transmise et reçue sous forme électronique,
+comportant les informations légalement requises et garantissant son authenticité et intégrité.
+
+EXIGENCES LÉGALES AU MAROC
+1. Authenticité de l'origine : signature électronique qualifiée
+2. Intégrité du contenu : aucune modification possible après émission
+3. Lisibilité : format lisible pendant toute la durée de conservation
+
+CONSERVATION DES FACTURES
+Les factures doivent être conservées pendant 10 ans (Article 211 du CGI).
+
+CALCUL DE LA TVA
+Pour vérifier la cohérence :
+- Montant TVA = Montant HT × Taux TVA / 100
+- Montant TTC = Montant HT + Montant TVA
+- Tolérance acceptée : 0.02 MAD pour les arrondis
+
+PÉNALITÉS POUR NON-CONFORMITÉ
+- Amende de 2000 MAD par facture non conforme (Article 192 du CGI)
+- Redressement fiscal si TVA récupérée sur facture non conforme

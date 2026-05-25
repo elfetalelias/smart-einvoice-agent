@@ -1,0 +1,58 @@
+[project]
+name = "smart-einvoice-agent"
+version = "1.0.0"
+description = "Système intelligent de traitement et classification comptable des factures électroniques"
+authors = [{ name = "Étudiant ENSET", email = "etudiant@enset.ma" }]
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+dependencies = [
+    # LangChain & LangGraph
+    "langchain>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langgraph>=0.2.0",
+    # LLM & Embeddings
+    "openai>=1.50.0",
+    # Vector Store
+    "faiss-cpu>=1.7.4",
+    # Interface
+    "streamlit>=1.35.0",
+    # Validation & Schemas
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    # PDF & XML
+    "pypdf>=4.2.0",
+    "lxml>=5.2.0",
+    # Utilitaires
+    "python-dotenv>=1.0.0",
+    "tiktoken>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=5.0.0",
+]
+ollama = [
+    "langchain-ollama>=0.2.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+source = ["."]
+omit = ["tests/*", ".venv/*", "data/*", "rag/indexes/*"]
+
+[tool.coverage.report]
+fail_under = 80
