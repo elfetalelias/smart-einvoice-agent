@@ -13,7 +13,7 @@ class ValidationHumaine(TypedDict):
 class InvoiceState(TypedDict):
     # Fichier source
     fichier_path: str
-    fichier_type: Literal["pdf", "xml"]
+    fichier_type: Literal["pdf", "xml", "txt", "png", "jpg", "jpeg", "webp"]
     fichier_nom: str
 
     # Statut du workflow

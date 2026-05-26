@@ -15,9 +15,11 @@ def _get_store():
 @tool
 def search_normes_facturation(query: str) -> str:
     """
-    Recherche dans le corpus des normes de facturation électronique.
-    Utiliser pour vérifier : structure XML, format UBL, Factur-X, EN 16931, PEPPOL.
-    Retourne les passages pertinents des spécifications techniques.
+    Recherche dans le corpus des normes de facturation electronique marocaines.
+    Source principale : cgi-2026.pdf (Article 145 CGI — mentions obligatoires,
+    sanctions, e-facture DGI) et ubl_facturx.txt (formats d'echange).
+    Utiliser pour verifier : mentions obligatoires Article 145, sanctions fiscales,
+    obligations e-facture DGI, numero sequentiel, ICE, IF.
     """
     docs = search_documents(_get_store(), query)
     results = []

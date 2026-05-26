@@ -1,328 +1,120 @@
-# Système Intelligent de Traitement et Classification Comptable des Factures Électroniques
+# Système Intelligent de Traitement des Factures Électroniques
 
-> Système multi-agent LangGraph + LangChain avec RAG multi-corpus et validation humaine  
-> Projet de fin de module — Architecture Multi-Agents
-
----
-
-## Table des Matières
-
-1. [Problématique](#problématique)
-2. [Objectifs](#objectifs)
-3. [Correspondance avec les Consignes](#correspondance-avec-les-consignes)
-4. [Architecture Globale](#architecture-globale)
-5. [Workflow Détaillé](#workflow-détaillé)
-6. [Justification de l'Orchestration](#justification-de-lorchestration)
-7. [Agents du Système](#agents-du-système)
-8. [RAG Multi-Corpus](#rag-multi-corpus)
-9. [Human-in-the-Loop](#human-in-the-loop)
-10. [Stack Technique](#stack-technique)
-11. [Installation](#installation)
-12. [Configuration .env](#configuration-env)
-13. [Structure du Projet](#structure-du-projet)
-14. [Tests](#tests)
-15. [Limitations](#limitations)
+Projet de fin de module — Master SDIA, Systèmes Multi-Agents FC  
+Prof. RETAL Sara
 
 ---
 
-## Problématique
-
-Les entreprises marocaines traitent chaque jour des dizaines ou centaines de factures fournisseurs.
-Ce processus est aujourd'hui manuel, lent et sujet aux erreurs :
-
-- Vérification manuelle de la conformité fiscale (TVA, ICE, IF, mentions obligatoires)
-- Classification comptable laborieuse selon le Plan Comptable Marocain (PCM)
-- Risque d'erreurs dans les écritures comptables
-- Manque d'un assistant intelligent pour guider le comptable
-
-Comment automatiser intelligemment l'extraction, la vérification et la classification comptable
-des factures électroniques tout en gardant le comptable humain au centre des décisions ?
+Ce projet implémente un système multi-agent capable de traiter des factures électroniques de manière automatique. Le système extrait les données d'une facture (PDF, XML, image ou TXT), vérifie sa conformité fiscale selon la législation marocaine, classe la facture dans le Plan Comptable Marocain, génère l'écriture comptable correspondante, et produit le journal comptable final. Trois points de validation humaine sont intégrés dans le workflow pour garantir la fiabilité du traitement.
 
 ---
 
-## Objectifs
+## Architecture
 
-1. Extraire automatiquement les données d'une facture PDF ou XML avec un score de confiance
-2. Vérifier la conformité fiscale selon la législation marocaine via RAG
-3. Classifier la facture avec un code du Plan Comptable Marocain via RAG
-4. Générer une écriture comptable suggérée (Débit/Crédit)
-5. Intégrer trois points de validation humaine obligatoires
-6. Produire un rapport final structuré en français
-7. Offrir une interface web intuitive en français
+Le système est construit autour de six agents qui travaillent ensemble de manière séquentielle. Un superviseur central orchestre le flux via LangGraph — il lit l'état courant de la facture et décide quel agent appeler ensuite.
 
----
+- **Superviseur** : orchestre le workflow et décide du prochain nœud selon l'état courant
+- **Extracteur** : lit la facture (PDF, XML, image PNG/JPG/WEBP, TXT) et extrait les données structurées
+- **Agent de Conformité** : vérifie les champs obligatoires et la cohérence fiscale (TVA, ICE, IF) via RAG
+- **Classificateur Comptable** : propose un code du Plan Comptable Marocain via RAG
+- **Agent d'Écriture** : génère l'écriture Débit/Crédit équilibrée
+- **Journal Comptable** : compile toutes les étapes traitées dans le document final
 
-## Correspondance avec les Consignes
-
-| Consigne du Professeur | Implémentation dans le Projet |
-|---|---|
-| Système multi-agent autonome/semi-autonome | 6 agents spécialisés orchestrés par un Superviseur |
-| LangChain pour agents et tools | Tous les agents et tools utilisent LangChain |
-| LangGraph pour orchestration | invoice_graph.py — StateGraph complet |
-| Collaboration hiérarchique justifiée | Superviseur -> Agents spécialisés (détail section 6) |
-| RAG agentique multi-corpus | 3 corpus, 3 retrievers, routing dynamique |
-| Human-in-the-Loop | 3 points de validation : extraction, conformité, classification |
-| Interface web fonctionnelle | Streamlit multipage en français |
-| Structure projet claire | 8 dossiers séparés par responsabilité |
-| Gestion des prompts | Dossier prompts/ avec un fichier par agent |
-| LangChain + LangGraph avec logique claire | LangChain = agents/tools, LangGraph = orchestration |
-| uv pour reproductibilité | pyproject.toml + uv.lock + uv sync |
-| README complet | Ce document |
-
----
-
-## Architecture Globale
-
-```
-+-------------------------------------------------------------+
-|                     INTERFACE STREAMLIT                      |
-|         (Téléversement -> Validation -> Rapport)            |
-+---------------------+---------------------------------------+
-                      |
-+---------------------v---------------------------------------+
-|                   LANGGRAPH WORKFLOW                         |
-|                                                             |
-|  +-------------+                                           |
-|  | SUPERVISEUR | <-- contrôle le flux, gère InvoiceState  |
-|  +------+------+                                           |
-|         |                                                   |
-|    +----v--------------------------------------------+     |
-|    |            WORKFLOW SÉQUENTIEL HIÉRARCHIQUE      |     |
-|    |                                                  |     |
-|    |  1. EXTRACTEUR  ──────────────────────────────► |     |
-|    |  2. [VALIDATION HUMAINE #1]                     |     |
-|    |  3. CONFORMITÉ  ──────────────────────────────► |     |
-|    |  4. [VALIDATION HUMAINE #2]                     |     |
-|    |  5. CLASSIFICATEUR COMPTABLE  ────────────────► |     |
-|    |  6. [VALIDATION HUMAINE #3]                     |     |
-|    |  7. ÉCRITURE COMPTABLE  ──────────────────────► |     |
-|    |  8. RAPPORTEUR  ──────────────────────────────► |     |
-|    +--------------------------------------------------+     |
-+-------------------------------------------------------------+
-                      |
-+---------------------v---------------------------------------+
-|                   RAG MULTI-CORPUS                           |
-|                                                             |
-|  +----------------+ +-----------------+ +---------------+  |
-|  | CORPUS FISCAL  | | CORPUS NORMES   | | CORPUS PCM    |  |
-|  | MAROCAIN       | | FACTURATION     | | (Plan Compta) |  |
-|  |                | | ÉLECTRONIQUE    | |               |  |
-|  | • TVA          | | • UBL           | | • Classe 6    |  |
-|  | • ICE/IF       | | • Factur-X      | | • Classe 2    |  |
-|  | • Mentions     | | • EN 16931      | | • Classe 4    |  |
-|  +----------------+ +-----------------+ +---------------+  |
-|                                                             |
-|  Routing dynamique : question -> corpus(s) pertinent(s)    |
-+-------------------------------------------------------------+
-```
-
----
-
-## Workflow Détaillé
-
-```
-UTILISATEUR téléverse facture (PDF/XML)
-         |
-         v
-[NOEUD: extract_invoice]
-  Agent Extracteur lit le fichier
-  -> extrait : fournisseur, numéro, date, ICE, IF, HT, TVA, TTC, lignes
-  -> calcule score_confiance_extraction
-         |
-         v
-[NOEUD: human_validation_1]  <-- VALIDATION HUMAINE #1
-  Streamlit affiche les données extraites
-  Utilisateur : Accepter / Modifier / Rejeter
-         |
-         v
-[NOEUD: check_compliance]
-  Agent Conformité appelle search_regles_fiscales()
-  -> vérifie champs obligatoires, cohérence TVA
-  -> produit liste d'avertissements
-         |
-         v
-[NOEUD: human_validation_2]  <-- VALIDATION HUMAINE #2
-  Streamlit affiche les avertissements
-  Utilisateur : Confirmer / Ignorer les avertissements
-         |
-         v
-[NOEUD: classify_accounting]
-  Agent Classificateur appelle search_plan_comptable()
-  -> propose code PCM + justification
-  -> score_confiance_classification
-         |
-         v
-[NOEUD: human_validation_3]  <-- VALIDATION HUMAINE #3
-  Streamlit affiche le code proposé
-  Utilisateur : Accepter / Corriger le code
-         |
-         v
-[NOEUD: generate_journal_entry]
-  Agent Écriture Comptable
-  -> génère Débit / Crédit selon code validé
-         |
-         v
-[NOEUD: generate_report]
-  Agent Rapporteur
-  -> rapport final en français (toutes les étapes)
-         |
-         v
-RAPPORT FINAL affiché + téléchargeable
-```
-
----
-
-## Justification de l'Orchestration
-
-### Choix : Architecture Hiérarchique avec séquence guidée
-
-Le traitement d'une facture est intrinsèquement séquentiel avec dépendances :
-- On ne peut pas classifier avant d'extraire
-- On ne peut pas générer l'écriture avant de classifier
-- Chaque étape dépend du résultat de la précédente
-
-Le Superviseur lit l'état global (InvoiceState), décide du prochain nœud, gère les bifurcations
-(rejet -> arrêt, modification -> re-extraction) et garantit que les validations humaines bloquent le flux.
-
-**Note architecture** : L'application Streamlit utilise un mode batch parallèle (ThreadPoolExecutor)
-pour traiter plusieurs factures simultanément. Le workflow LangGraph complet est disponible via
- pour le mode facture unique.
-
----
-
-## Agents du Système
-
-### Agent Superviseur
-Orchestre l'ensemble du workflow. Lit InvoiceState et décide du prochain nœud.
-
-### Agent Extracteur
-Lit et structure les données de la facture (PDF ou XML).
-Retourne : fournisseur, numéro, date, ICE, IF, HT, TVA, TTC, lignes, score_confiance.
-
-### Agent de Conformité
-Vérifie la conformité fiscale marocaine via RAG corpus fiscal.
-Retourne : liste d'avertissements, références législatives, score_conformite.
-
-### Agent de Classification Comptable
-Propose un code du Plan Comptable Marocain via RAG corpus PCM.
-Retourne : code_comptable, libelle, justification, score_confiance, alternatives.
-
-### Agent d'Écriture Comptable
-Génère l'écriture Débit/Crédit selon le code validé.
-Retourne : liste d'écritures équilibrées.
-
-### Agent Rapporteur
-Compile toutes les informations en un rapport final structuré en français.
+La collaboration est **hiérarchique et séquentielle** : le Superviseur contrôle le flux via LangGraph, chaque agent dépend du résultat du précédent, et trois nœuds de validation humaine bloquent la progression jusqu'à confirmation.
 
 ---
 
 ## RAG Multi-Corpus
 
-Trois corpus vectorisés avec FAISS :
+Le système utilise trois corpus vectorisés avec FAISS :
 
-1. Corpus Fiscal Marocain (TVA, ICE, mentions obligatoires)
-   Tool : search_regles_fiscales(query)
+- **Corpus règles fiscales** (`cgi-2026.pdf`) — TVA, ICE, IF, taux applicables
+  - Tool : `search_regles_fiscales`
+- **Corpus normes facturation** (`cgi-2026.pdf` + `ubl_facturx.txt`) — Article 145 CGI, e-facture DGI, mentions obligatoires, sanctions
+  - Tool : `search_normes_facturation`
+- **Corpus Plan Comptable Marocain** (`PDF`) — classes 2, 3, 4, 6, 7
+  - Tool : `search_plan_comptable`
 
-2. Corpus Normes Facturation Électronique (Article 145 CGI, ICE/IF, sanctions, e-facture DGI)
-   Tool : search_normes_facturation(query)
-
-3. Corpus Plan Comptable Marocain (Classes 2, 3, 4, 6, 7)
-   Tool : search_plan_comptable(query)
-
-Routing dynamique : chaque agent sélectionne le(s) corpus pertinent(s) selon sa mission.
-Un agent RAG à routing implicite par LLM (create_react_agent) est disponible dans rag/rag_router_agent.py.
+Le routing est **implicite par LLM** : l'agent RAG (`create_react_agent`) analyse la question, choisit le ou les outils pertinents, récupère les documents et génère une réponse contextuelle. Toutes les requêtes passent par `retrieve_context()` dans `rag/rag_router_agent.py`.
 
 ---
 
 ## Human-in-the-Loop
 
-### Validation #1 — Données Extraites
-Actions : Accepter / Modifier / Rejeter
+Trois points de contrôle sont intégrés dans le graphe LangGraph :
 
-### Validation #2 — Résultats de Conformité
-Actions : Confirmer / Ignorer avec justification
-
-### Validation #3 — Classification Comptable
-Actions : Accepter / Corriger le code manuellement
+1. **Validation #1** — après l'extraction : l'utilisateur vérifie et corrige les données extraites
+2. **Validation #2** — après la conformité : l'utilisateur confirme ou ignore les avertissements fiscaux
+3. **Validation #3** — après la classification : l'utilisateur accepte ou corrige le code comptable proposé
 
 ---
 
-## Stack Technique
+## Tech Stack
 
 - Python 3.11+
-- LangChain 0.3+
-- LangGraph 0.2+
-- OpenAI GPT-4o (ou Ollama llama3 en local)
-- FAISS pour les index vectoriels
-- Streamlit 1.35+
-- Pydantic 2.x
-- pypdf 4.x
-- lxml 5.x
-- python-dotenv
+- LangChain
+- LangGraph
+- OpenAI GPT-4o-mini
+- FAISS (index vectoriels)
+- Streamlit (interface web)
+- Pydantic v2
 - uv (gestionnaire de dépendances)
-- pytest + pytest-asyncio
+- pytest
 
 ---
 
 ## Installation
 
 ```bash
-# Installer uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Cloner le projet
-git clone https://github.com/<username>/smart-einvoice-agent.git
+git clone https://github.com/elfetalelias/smart-einvoice-agent.git
 cd smart-einvoice-agent
 
-# Créer l'environnement et installer les dépendances
 uv venv
 source .venv/bin/activate
 uv sync
-
-# Copier les variables d'environnement
-cp .env.example .env
-# Éditer .env avec vos clés API
-
-# Ingérer les corpus RAG
-python rag/ingest.py
-
-# Lancer l'application
-streamlit run app.py
 ```
 
 ---
 
-## Configuration .env
+## Configuration
+
+Créer un fichier `.env` à la racine du projet :
 
 ```
 OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o
+OPENAI_MODEL=gpt-4o-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 VECTOR_STORE_PATH=rag/indexes
 FAISS_INDEX_TAX=rag/indexes/tax_rules_index
 FAISS_INDEX_STANDARDS=rag/indexes/einvoice_standards_index
 FAISS_INDEX_ACCOUNTING=rag/indexes/accounting_plan_index
 RAG_TOP_K=5
-RAG_SIMILARITY_THRESHOLD=0.7
-EXTRACTION_CONFIDENCE_THRESHOLD=0.8
 CLASSIFICATION_CONFIDENCE_THRESHOLD=0.7
 OUTPUT_DIR=data/outputs
-LOG_LEVEL=INFO
+```
+
+Un fichier `.env.example` est fourni avec toutes les variables.
+
+Avant de lancer l'application, ingérer les corpus RAG :
+
+```bash
+uv run python rag/ingest.py
 ```
 
 ---
 
-## Structure du Projet
+## Lancer l'application
+
+```bash
+uv run streamlit run app.py
+```
+
+---
+
+## Structure du projet
 
 ```
 smart-einvoice-agent/
-├── README.md
-├── pyproject.toml
-├── uv.lock
-├── .env.example
-├── .gitignore
-├── app.py
-├── demo_graph.py
 ├── agents/
 │   ├── supervisor_agent.py
 │   ├── extractor_agent.py
@@ -341,9 +133,9 @@ smart-einvoice-agent/
 │   ├── einvoice_standards_retriever_tool.py
 │   └── accounting_plan_retriever_tool.py
 ├── rag/
-│   ├── ingest.py
-│   ├── vector_store.py
 │   ├── rag_router_agent.py
+│   ├── vector_store.py
+│   ├── ingest.py
 │   └── corpora/
 │       ├── regles_fiscales_marocaines/
 │       ├── normes_facturation_electronique/
@@ -362,35 +154,11 @@ smart-einvoice-agent/
 │   ├── invoice_schema.py
 │   ├── compliance_schema.py
 │   └── accounting_schema.py
-├── data/
-│   ├── sample_invoices/
-│   └── outputs/
-└── tests/
-    ├── test_extractor_agent.py
-    ├── test_compliance_agent.py
-    ├── test_accounting_classifier.py
-    ├── test_rag_retrievers.py
-    └── test_invoice_graph.py
-```
-
----
-
-## Démonstration LangGraph (Mode Facture Unique)
-
-Pour exécuter le graphe LangGraph complet sur une facture unique (sans l'interface batch) :
-
-```bash
-uv run python demo_graph.py data/sample_invoices/facture_test_01.txt
-```
-
-Ce script exécute les 5 nœuds LangGraph séquentiellement avec validation humaine simulée.
-
-### Démonstration RAG Routing LLM
-
-Pour démontrer le routing implicite par LLM (le LLM choisit quel corpus interroger) :
-
-```bash
-uv run python rag/rag_router_agent.py
+├── tests/
+├── app.py
+├── pyproject.toml
+├── uv.lock
+└── .env.example
 ```
 
 ---
@@ -399,15 +167,7 @@ uv run python rag/rag_router_agent.py
 
 ```bash
 uv run pytest tests/ -v
-uv run pytest tests/ --cov=. --cov-report=html
+uv run pytest tests/ --cov=. --cov-report=term-missing
 ```
 
----
-
-## Limitations
-
-1. Dépendance LLM : la qualité d'extraction dépend du modèle utilisé
-2. Corpus RAG statique : les corpus doivent être mis à jour manuellement
-3. Formats supportés : PDF texte et XML uniquement (pas d'OCR complet)
-4. Législation : basé sur la réglementation marocaine au moment du développement
-5. Non-remplacement expert : le système est un assistant, pas un expert-comptable certifié
+93 tests, couverture 88%.

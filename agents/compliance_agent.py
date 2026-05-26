@@ -1,8 +1,7 @@
 from pathlib import Path
 from langchain_core.prompts import ChatPromptTemplate
 from config.llm import get_llm_openai
-from tools.tax_rules_retriever_tool import search_regles_fiscales
-from tools.einvoice_standards_retriever_tool import search_normes_facturation
+from rag.rag_router_agent import retrieve_context
 from schemas.invoice_schema import InvoiceData
 from schemas.compliance_schema import ComplianceResult
 
@@ -43,9 +42,14 @@ def run_compliance_agent(invoice_data: InvoiceData) -> ComplianceResult:
     """Vérifie la conformité fiscale de la facture en consultant le RAG."""
     invoice_data = _normalize_invoice(invoice_data)
 
-    query = f"mentions obligatoires facture fournisseur ICE IF TVA {invoice_data.taux_tva}%"
-    rag_fiscal = search_regles_fiscales.invoke({"query": query})
-    rag_normes = search_normes_facturation.invoke({"query": "champs obligatoires facture électronique"})
+    # Routing RAG implicite par LLM — l'agent choisit les corpus pertinents
+    query = (
+        f"Règles de conformité fiscale marocaine pour une facture : "
+        f"TVA {invoice_data.taux_tva}%, fournisseur '{invoice_data.fournisseur}'. "
+        f"Champs obligatoires Article 145 CGI, taux TVA valides Article 99 CGI, "
+        f"ICE et IF obligatoires, mentions légales."
+    )
+    rag_context = retrieve_context(query)
 
     llm = get_llm_openai(temperature=0.0)
     system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
@@ -55,8 +59,7 @@ def run_compliance_agent(invoice_data: InvoiceData) -> ComplianceResult:
         ("human", (
             "Facture à vérifier :\n{invoice_json}\n\n"
             "{arithmetic_summary}\n\n"
-            "Règles fiscales marocaines :\n{rag_fiscal}\n\n"
-            "Normes facturation électronique :\n{rag_normes}"
+            "Contexte RAG (routing LLM multi-corpus) :\n{rag_context}"
         )),
     ])
 
@@ -64,6 +67,5 @@ def run_compliance_agent(invoice_data: InvoiceData) -> ComplianceResult:
     return chain.invoke({
         "invoice_json": invoice_data.model_dump_json(indent=2),
         "arithmetic_summary": _arithmetic_summary(invoice_data),
-        "rag_fiscal": rag_fiscal,
-        "rag_normes": rag_normes,
+        "rag_context": rag_context,
     })
