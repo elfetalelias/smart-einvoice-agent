@@ -24,6 +24,7 @@ dependencies = [
     "lxml>=5.2.0",
     "python-dotenv>=1.0.0",
     "tiktoken>=0.7.0",
+    "fpdf2>=2.8.7",
 ]
 
 [project.optional-dependencies]
@@ -59,6 +60,8 @@ omit = [
     "app.py",
     "rag/ingest.py",
     "graph/invoice_graph.py",
+    "demo_graph.py",
+    "generate_rapport.py",
 ]
 
 [tool.coverage.report]
